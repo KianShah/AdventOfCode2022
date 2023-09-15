@@ -1,13 +1,13 @@
-from typing import Tuple, List, Dict, Set
 from time import perf_counter
-
+from typing import Tuple, List, Dict, Set
 
 with open('Day15.txt') as f:
     out = f.read().split('\n')
 
 
 def manhatten_dist(A: Tuple[int, int], B: Tuple[int, int]) -> int:
-    return abs(A[0]-B[0]) + abs(A[1] - B[1])
+    return abs(A[0] - B[0]) + abs(A[1] - B[1])
+
 
 # Part 1
 print("Part 1")
@@ -27,7 +27,7 @@ for line in out:
     beacons.add((b_x, b_y))
     extra_dist = dist_to_beacon - dist_to_2mil
     if extra_dist > 0:
-        for i in range(s_x-extra_dist, s_x+extra_dist+1):
+        for i in range(s_x - extra_dist, s_x + extra_dist + 1):
             cannot_contain_beacons.add(i)
 
 for bx, by in beacons:
@@ -39,6 +39,29 @@ print(len(cannot_contain_beacons))
 print("Part 2")
 
 
+def merge_intervals(intervals):
+    # First, sort the intervals by their start times
+    intervals = sorted(intervals, key=lambda x: x[0])
+
+    # Initialize the merged intervals with the first interval in the list
+    merged = [intervals[0]]
+
+    # Iterate through the rest of the intervals and try to merge them
+    # with the last interval in the `merged` list
+    for current in intervals[1:]:
+        previous = merged[-1]
+        # If the current interval overlaps with the previous interval,
+        # merge them by updating the end time of the previous interval
+        # if the current interval extends past it
+        if current[0] <= previous[1]:
+            merged[-1] = (previous[0], max(previous[1], current[1]))
+        # Otherwise, just append the current interval to the `merged` list
+        else:
+            merged.append(current)
+
+    return merged
+
+
 def add_interval(intervals: List[Tuple[int, int]], new_interval: Tuple[int, int]) -> List[Tuple[int, int]]:
     result = []
 
@@ -48,7 +71,7 @@ def add_interval(intervals: List[Tuple[int, int]], new_interval: Tuple[int, int]
             result.append(intervals[i])
         elif new_interval[1] < intervals[i][0]:
             result.append(new_interval)
-            result.extend(intervals[i:])
+            result += intervals[i:]
             break
         else:
             new_interval = (min(intervals[i][0], new_interval[0]), max(intervals[i][1], new_interval[1]))
@@ -80,8 +103,10 @@ for row in range(4000001):
         extra_dist = s_range - dist_to_2mil
         if extra_dist > 0:
             new_invalid_range = max(0, s_x - extra_dist), min(4000000, s_x + extra_dist)
-            invalid_ranges = add_interval(invalid_ranges, new_invalid_range)
-    if len(invalid_ranges) != 1 or (invalid_ranges[0][0] != 0 or invalid_ranges[0][1] != 4000000):
+            invalid_ranges.append(new_invalid_range)
+
+    invalid_ranges = merge_intervals(invalid_ranges)
+    if len(invalid_ranges) != 1 or invalid_ranges[0] != (0, 4000000):
         target_x = invalid_ranges[0][1] + 1
         target_y = row
         print(f"Tuning frequency: {target_x * 4000000 + target_y}")
